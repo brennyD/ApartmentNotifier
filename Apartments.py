@@ -119,5 +119,5 @@ class McKenzie(ApartmentBase):
 
 
 if __name__ == "__main__":
-    apt = McKenzie()#Stratus() #Kiara()
+    apt = Stratus() #Kiara()
     print(apt.new_listings())
