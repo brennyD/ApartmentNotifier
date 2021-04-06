@@ -17,8 +17,9 @@ def check_reservations():
     messenger = Notifier()
     for a in APARTMENTS:
         msg = a.new_listings()
-        for c in contacts:
-            messenger.sendText(c["number"], c["carrier"], msg)
+        if msg not None:
+            for c in contacts:
+                messenger.sendText(c["number"], c["carrier"], msg)
 
 
 
