@@ -4,10 +4,10 @@ import os
 import datetime
 from threading import Thread
 from NotificationWorker import Notifier
-from Apartments import Kiara, Stratus, McKenzie
+from Apartments import Kiara, Stratus, McKenzie, Cirrus
 
 
-APARTMENTS = [Kiara(), Stratus(), McKenzie()]
+APARTMENTS = [Kiara(), Stratus(), McKenzie(), Cirrus()]
 
 CONTACTS  = [{"number":os.environ["MY_NUMBER"], "carrier":"vzw"}]
 
