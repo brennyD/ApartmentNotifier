@@ -14,6 +14,7 @@ CONTACTS  = [{"number":os.environ["MY_NUMBER"], "carrier":"vzw"}]
 
 
 def check_reservations():
+    print("Started at {}".format(datetime.datetime.now()))
     messenger = Notifier()
     for a in APARTMENTS:
         msg = a.new_listings()

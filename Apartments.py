@@ -116,8 +116,48 @@ class McKenzie(ApartmentBase):
         return ret
 
 
+class Cirrus(ApartmentBase):
+    def __init__(self):
+        ApartmentBase.__init__(self)
+        self.URL_exts = ['b1', 'b2-2bed2', 'b3']
+        self.URL_BASE = "https://www.cirrusseattle.com/floorplans/"
+
+    def map_row(self, row):
+        info = row.findAll('td')
+        ret = {
+            "unit": int(info[0].get_text().strip().split('#')[1]),
+            "sqft": info[1].get_text().strip(),
+            "rent": info[2].get_text().strip().split(":")[1],
+        }
+        return ret
+
+
+    def new_listings(self):
+        ret = None
+        for e in self.URL_exts:
+            req = requests.get(self.URL_BASE + e)
+            soup = BeautifulSoup(req.content, 'html.parser')
+            if b'Units are not available under selected Floor plan(s)' not in req.content:
+                table = soup.find("table", class_=["table", "table-bordered"])
+                body = table.find('tbody')
+                rows = body.findAll('tr')
+                for row in rows:
+                    info = self.map_row(row)
+                    if info["unit"] not in self.seen_listings:
+                        self.seen_listings.append(info["unit"])
+                        if ret is None:
+                            ret = "NEW STRATUS LISTING(s):\n"
+                        formatted = "{} unit {}, {} sqft with rent range of {}\n".format(e, info["unit"], info["sqft"], info["rent"])
+                        ret += formatted
+            else:
+                print("No {} units".format(e))
+
+
+        return ret
+
+
 
 
 if __name__ == "__main__":
-    apt = Stratus() #Kiara()
+    apt = Cirrus()#Stratus() #Kiara()
     print(apt.new_listings())
