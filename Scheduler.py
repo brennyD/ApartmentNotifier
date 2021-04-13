@@ -17,6 +17,7 @@ def check_reservations():
     print("Started at {}".format(datetime.datetime.now()))
     messenger = Notifier()
     for a in APARTMENTS:
+        print("Checking {}".format(type(a).__name__))
         msg = a.new_listings()
         if msg is not None:
             for c in CONTACTS:
