@@ -108,7 +108,7 @@ class McKenzie(ApartmentBase):
             if u["floor_plan_id"] in floor_plans and u["floor_id"] not in self.seen_listings:
                 self.seen_listings.append(u["floor_id"])
                 if ret is None:
-                    ret = "McKenzie LISTING(s)\n"
+                    ret = "NEW McKenzie LISTING(s)\n"
                 formatted = "unit {}, {} sqft with rent of ${}\n".format(u["unit_number"], u["display_area"].split(" ")[0], u["display_price"][1:])
                 ret += formatted
 
@@ -146,7 +146,7 @@ class Cirrus(ApartmentBase):
                     if info["unit"] not in self.seen_listings:
                         self.seen_listings.append(info["unit"])
                         if ret is None:
-                            ret = "NEW STRATUS LISTING(s):\n"
+                            ret = "NEW Cirrus LISTING(s):\n"
                         formatted = "{} unit {}, {} sqft with rent range of {}\n".format(e, info["unit"], info["sqft"], info["rent"])
                         ret += formatted
             else:
