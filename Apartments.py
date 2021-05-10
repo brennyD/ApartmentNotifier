@@ -39,7 +39,11 @@ class Kiara(ApartmentBase):
         data = json.loads(data)
         ret = None
         for r in data:
-            info = self.map_row(r)
+            try:
+                info = self.map_row(r)
+            except Exception as e:
+                print(e)
+                continue
             if info["type"] == "2 Bedroom" and info["unit"] not in self.seen_listings:
                 if ret is None:
                     ret = "NEW KIARA LISTING(s):\n"
