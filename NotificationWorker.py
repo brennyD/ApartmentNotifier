@@ -20,12 +20,29 @@ class Notifier:
         self.server.login(SENDER_EMAIL,SENDER_PSWD)
 
 
+
+
     def sendText(self, number, carrier, message):
-        msg = EmailMessage()
-        msg.set_content(message)
-        msg["From"] = SENDER_EMAIL
-        msg["To"] = "{}@{}".format(str(number), EMAIL_PREFIXES[carrier])
-        self.server.send_message(msg)
+        splitted = message.split("\n")
+        grouped = []
+        curr = ""
+        for split in splitted:
+            if len(curr+split) < 130:
+                curr += "\n{}".format(split)
+            else:
+                grouped.append(curr)
+                curr = split
+        grouped.append(curr)
+
+
+        print(grouped)
+        for m in grouped:
+            msg = EmailMessage()
+            msg.set_content(m)
+            msg["From"] = SENDER_EMAIL
+            msg["To"] = "{}@{}".format(str(number), EMAIL_PREFIXES[carrier])
+            self.server.send_message(msg)
+            time.sleep(5)
 
 
 if __name__ == "__main__":
