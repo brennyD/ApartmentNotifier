@@ -62,8 +62,11 @@ class Kiara(ApartmentBase):
                 rem += "Unit {}, {} sqft, ${} no longer available\n".format(u["unit"], u["sqft"], u["rent"])
                 self.seen_listings.remove(u)
 
-
-        ret += "\n{}".format(rem)
+        if ret is None and len(rem) > 0:
+            ret = "KIARA LISTING(s):\n"
+            ret += "\n{}".format(rem)
+        elif ret is not None and len(rem) > 0:
+            ret += "\n{}".format(rem)
         return ret
 
 class Stratus(ApartmentBase):
@@ -114,7 +117,11 @@ class Stratus(ApartmentBase):
                 rem += "{} unit {}, {} sqft, ${} no longer available\n".format(u["type"], u["unit"], u["sqft"], u["rent"])
                 self.seen_listings.remove(u)
 
-        ret+=rem
+        if ret is None and len(rem) > 0:
+            ret = "STRATUS LISTING(s):\n"
+            ret += rem
+        elif ret is not None and len(rem) > 0:
+            ret += rem
         return ret
 
 class McKenzie(ApartmentBase):
@@ -145,7 +152,12 @@ class McKenzie(ApartmentBase):
             if u["floor_plan_id"] not in floor_plans:
                 rem += "unit {}, {} sqft ${} no longer available\n".format(u["unit_number"], u["display_area"].split(" ")[0], u["display_price"][1:])
                 self.seen_listings.remove(u)
-        ret += rem
+
+        if ret is None and len(rem) > 0:
+            ret = "McKenzie LISTING(s):\n"
+            ret += rem
+        elif ret is not None and len(rem) > 0:
+            ret += rem
         return ret
 
 
@@ -195,7 +207,12 @@ class Cirrus(ApartmentBase):
             if u not in units:
                 rem += "{} unit {}, {} sqft, ${} no longer available\n".format(u["type"], u["unit"], u["sqft"], u["rent"])
                 self.seen_listings.remove(u)
-        ret+=rem
+
+        if ret is None and len(rem) > 0:
+            ret = "Cirrus LISTING(s):\n"
+            ret += rem
+        elif ret is not None and len(rem) > 0:
+            ret += rem
         return ret
 
 
