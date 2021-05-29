@@ -38,20 +38,32 @@ class Kiara(ApartmentBase):
         data = raw_data[:end]
         data = json.loads(data)
         ret = None
+        rem = ""
+
+        units = []
         for r in data:
             try:
-                info = self.map_row(r)
+                row = self.map_row(r)
+                if row["type"] == "2 Bedroom":
+                    units.append(self.map_row(r))
             except Exception as e:
                 print(e)
                 continue
-            if info["type"] == "2 Bedroom" and info["unit"] not in self.seen_listings:
+
+        for info in units:
+            if info not in self.seen_listings:
                 if ret is None:
-                    ret = "NEW KIARA LISTING(s):\n"
-                self.seen_listings.append(info["unit"])
+                    ret = "KIARA LISTING(s):\n"
+                self.seen_listings.append(info)
                 formatted = "{} unit {}, {} sqft for ${}/month on floor {}\n".format(info["type"], info["unit"], info["sqft"], info["rent"], info["floor"])
                 ret += formatted
+        for u in self.seen_listings:
+            if u not in units:
+                rem += "Unit {}, {} sqft, ${} no longer available\n".format(u["unit"], u["sqft"], u["rent"])
+                self.seen_listings.remove(u)
 
 
+        ret += "\n{}".format(rem)
         return ret
 
 class Stratus(ApartmentBase):
@@ -72,6 +84,8 @@ class Stratus(ApartmentBase):
 
     def new_listings(self):
         ret = None
+        rem = ""
+        units = []
         for e in self.URL_exts:
             req = requests.get(self.URL_BASE + e)
             soup = BeautifulSoup(req.content, 'html.parser')
@@ -79,18 +93,28 @@ class Stratus(ApartmentBase):
                 table = soup.find("table", class_=["table", "table-bordered"])
                 body = table.find('tbody')
                 rows = body.findAll('tr')
+                these_units = []
+
                 for row in rows:
-                    info = self.map_row(row)
-                    if info["unit"] not in self.seen_listings:
-                        self.seen_listings.append(info["unit"])
+                    obj = self.map_row(row)
+                    obj["type"] = e
+                    these_units.append(self.map_row(row))
+                for info in these_units:
+                    if info not in self.seen_listings:
+                        self.seen_listings.append(info)
                         if ret is None:
-                            ret = "NEW STRATUS LISTING(s):\n"
+                            ret = "STRATUS LISTING(s):\n"
                         formatted = "{} unit {}, {} sqft with rent range of {}\n".format(e, info["unit"], info["sqft"], info["rent"])
                         ret += formatted
+                units.extend(these_units)
             else:
                 print("No {} units".format(e))
+        for u in self.seen_listings:
+            if u not in units:
+                rem += "{} unit {}, {} sqft, ${} no longer available\n".format(u["type"], u["unit"], u["sqft"], u["rent"])
+                self.seen_listings.remove(u)
 
-
+        ret+=rem
         return ret
 
 class McKenzie(ApartmentBase):
@@ -101,6 +125,7 @@ class McKenzie(ApartmentBase):
     def new_listings(self):
         req = requests.get(self.URL).json()["data"]
         ret = None
+        rem = ""
         fp = req["floor_plans"]
         units = req["units"]
         floor_plans = {}
@@ -109,14 +134,18 @@ class McKenzie(ApartmentBase):
                 floor_plans[f["id"]] = f
 
         for u in units:
-            if u["floor_plan_id"] in floor_plans and u["floor_id"] not in self.seen_listings:
-                self.seen_listings.append(u["floor_id"])
+            if u["floor_plan_id"] in floor_plans and u not in self.seen_listings:
+                self.seen_listings.append(u)
                 if ret is None:
-                    ret = "NEW McKenzie LISTING(s)\n"
+                    ret = "McKenzie LISTING(s)\n"
                 formatted = "unit {}, {} sqft with rent of ${}\n".format(u["unit_number"], u["display_area"].split(" ")[0], u["display_price"][1:])
                 ret += formatted
-
-
+        print(self.seen_listings)
+        for u in self.seen_listings:
+            if u["floor_plan_id"] not in floor_plans:
+                rem += "unit {}, {} sqft ${} no longer available\n".format(u["unit_number"], u["display_area"].split(" ")[0], u["display_price"][1:])
+                self.seen_listings.remove(u)
+        ret += rem
         return ret
 
 
@@ -138,6 +167,8 @@ class Cirrus(ApartmentBase):
 
     def new_listings(self):
         ret = None
+        units = []
+        rem = ""
         for e in self.URL_exts:
             req = requests.get(self.URL_BASE + e)
             soup = BeautifulSoup(req.content, 'html.parser')
@@ -145,23 +176,46 @@ class Cirrus(ApartmentBase):
                 table = soup.find("table", class_=["table", "table-bordered"])
                 body = table.find('tbody')
                 rows = body.findAll('tr')
+                these_units = []
                 for row in rows:
-                    info = self.map_row(row)
-                    if info["unit"] not in self.seen_listings:
-                        self.seen_listings.append(info["unit"])
+                    obj = self.map_row(row)
+                    obj["type"] = e
+                    these_units.append(self.map_row(row))
+                for info in these_units:
+                    if info not in self.seen_listings:
+                        self.seen_listings.append(info)
                         if ret is None:
-                            ret = "NEW Cirrus LISTING(s):\n"
+                            ret = "Cirrus LISTING(s):\n"
                         formatted = "{} unit {}, {} sqft with rent range of {}\n".format(e, info["unit"], info["sqft"], info["rent"])
                         ret += formatted
+                units.extend(these_units)
             else:
                 print("No {} units".format(e))
-
-
+        for u in self.seen_listings:
+            if u not in units:
+                rem += "{} unit {}, {} sqft, ${} no longer available\n".format(u["type"], u["unit"], u["sqft"], u["rent"])
+                self.seen_listings.remove(u)
+        ret+=rem
         return ret
 
 
 
 
 if __name__ == "__main__":
-    apt = Cirrus()#Stratus() #Kiara()
+    dummy = {
+        "unit": 1123,
+        "type": "b3",
+        "baths": 2,
+        "sqft": 1215,
+        "floor": 19,
+        "rent": 4940
+    }
+    thicc = {
+        "unit_number": 1123,
+        "floor_plan_id": 1123,
+        "display_area": "1215 wut",
+        "display_price": "$11234"
+    }
+    apt = Cirrus()
+    apt.seen_listings.append(dummy)
     print(apt.new_listings())
