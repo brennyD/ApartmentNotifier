@@ -18,10 +18,17 @@ def check_reservations():
     messenger = Notifier()
     for a in APARTMENTS:
         print("Checking {}".format(type(a).__name__))
-        msg = a.new_listings()
+        try:
+            msg = a.new_listings()
         if msg is not None:
             for c in CONTACTS:
                 messenger.sendText(c["number"], c["carrier"], msg)
+        
+        except Exception as e:
+            error_msg = "{} failed with error: {}".format(type(a).__name__, e)
+            messenger.sendText(c["number"], c["carrier"],)
+            continue
+
 
 
 

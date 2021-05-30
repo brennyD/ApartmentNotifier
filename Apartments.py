@@ -233,6 +233,6 @@ if __name__ == "__main__":
         "display_area": "1215 wut",
         "display_price": "$11234"
     }
-    apt = Cirrus()
+    apt = Kiara()
     apt.seen_listings.append(dummy)
     print(apt.new_listings())
