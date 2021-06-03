@@ -34,8 +34,6 @@ class Notifier:
                 curr = split
         grouped.append(curr)
 
-
-        print(grouped)
         for m in grouped:
             msg = EmailMessage()
             msg.set_content(m)
