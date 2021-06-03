@@ -101,7 +101,7 @@ class Stratus(ApartmentBase):
                 for row in rows:
                     obj = self.map_row(row)
                     obj["type"] = e
-                    these_units.append(self.map_row(row))
+                    these_units.append(obj)
                 for info in these_units:
                     if info not in self.seen_listings:
                         self.seen_listings.append(info)
@@ -147,7 +147,6 @@ class McKenzie(ApartmentBase):
                     ret = "McKenzie LISTING(s)\n"
                 formatted = "unit {}, {} sqft with rent of ${}\n".format(u["unit_number"], u["display_area"].split(" ")[0], u["display_price"][1:])
                 ret += formatted
-        print(self.seen_listings)
         for u in self.seen_listings:
             if u["floor_plan_id"] not in floor_plans:
                 rem += "unit {}, {} sqft ${} no longer available\n".format(u["unit_number"], u["display_area"].split(" ")[0], u["display_price"][1:])
@@ -192,7 +191,7 @@ class Cirrus(ApartmentBase):
                 for row in rows:
                     obj = self.map_row(row)
                     obj["type"] = e
-                    these_units.append(self.map_row(row))
+                    these_units.append(obj)
                 for info in these_units:
                     if info not in self.seen_listings:
                         self.seen_listings.append(info)
