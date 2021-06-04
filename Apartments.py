@@ -23,6 +23,7 @@ class Kiara(ApartmentBase):
             "baths": int(row["Baths"]),
             "sqft": int(row["SqFt"]),
             "floor": int(row["Floor"]),
+            "available": row["Available"],
             "rent": int(row["Rent"])
         }
         return ret
@@ -55,7 +56,7 @@ class Kiara(ApartmentBase):
                 if ret is None:
                     ret = "KIARA LISTING(s):\n"
                 self.seen_listings.append(info)
-                formatted = "{} unit {}, {} sqft for ${}/month on floor {}\n".format(info["type"], info["unit"], info["sqft"], info["rent"], info["floor"])
+                formatted = "Unit {} available {}, {} sqft for ${}/month on floor {}\n".format(info["unit"], info["available"], info["sqft"], info["rent"], info["floor"])
                 ret += formatted
         for u in self.seen_listings:
             if u not in units:
@@ -77,10 +78,12 @@ class Stratus(ApartmentBase):
 
     def map_row(self, row):
         info = row.findAll('td')
+        date = info[4].get_text().strip().split(":")[1]
         ret = {
             "unit": int(info[0].get_text().strip().split('#')[1]),
             "sqft": info[1].get_text().strip(),
             "rent": info[2].get_text().strip().split(":")[1],
+            "available": "now" if date == "Available" else date
         }
         return ret
 
@@ -107,7 +110,7 @@ class Stratus(ApartmentBase):
                         self.seen_listings.append(info)
                         if ret is None:
                             ret = "STRATUS LISTING(s):\n"
-                        formatted = "{} unit {}, {} sqft with rent range of {}\n".format(e, info["unit"], info["sqft"], info["rent"])
+                        formatted = "{} unit {} available {}, {} sqft with rent range of {}\n".format(e, info["unit"], info["available"], info["sqft"], info["rent"])
                         ret += formatted
                 units.extend(these_units)
             else:
@@ -140,12 +143,13 @@ class McKenzie(ApartmentBase):
             if f["bedroom_count"] == 2 and f["bathroom_count"] == 2:
                 floor_plans[f["id"]] = f
 
+
         for u in units:
             if u["floor_plan_id"] in floor_plans and u not in self.seen_listings:
                 self.seen_listings.append(u)
                 if ret is None:
                     ret = "McKenzie LISTING(s)\n"
-                formatted = "unit {}, {} sqft with rent of ${}\n".format(u["unit_number"], u["display_area"].split(" ")[0], u["display_price"][1:])
+                formatted = "unit {} {}, {} sqft with rent of ${}\n".format(u["unit_number"], u["display_available_on"], u["display_area"].split(" ")[0], u["display_price"][1:])
                 ret += formatted
         for u in self.seen_listings:
             if u["floor_plan_id"] not in floor_plans:
@@ -168,10 +172,12 @@ class Cirrus(ApartmentBase):
 
     def map_row(self, row):
         info = row.findAll('td')
+        date = info[4].get_text().strip().split(":")[1]
         ret = {
             "unit": int(info[0].get_text().strip().split('#')[1]),
             "sqft": info[1].get_text().strip(),
             "rent": info[2].get_text().strip().split(":")[1],
+            "available": "now" if date == "Available" else date
         }
         return ret
 
@@ -197,7 +203,7 @@ class Cirrus(ApartmentBase):
                         self.seen_listings.append(info)
                         if ret is None:
                             ret = "Cirrus LISTING(s):\n"
-                        formatted = "{} unit {}, {} sqft with rent range of {}\n".format(e, info["unit"], info["sqft"], info["rent"])
+                        formatted = "{} unit {} available {}, {} sqft with rent range of {}\n".format(e, info["unit"], info["available"], info["sqft"], info["rent"])
                         ret += formatted
                 units.extend(these_units)
             else:
@@ -232,6 +238,6 @@ if __name__ == "__main__":
         "display_area": "1215 wut",
         "display_price": "$11234"
     }
-    apt = Kiara()
-    apt.seen_listings.append(dummy)
+    apt = McKenzie()
+    #apt.seen_listings.append(dummy)
     print(apt.new_listings())
