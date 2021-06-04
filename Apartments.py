@@ -8,7 +8,7 @@ class ApartmentBase:
         self.seen_listings = []
 
     def new_listings(self):
-        return "Im unimplemented the fuck?"
+        return "Im unimplemented!"
 
 
 class Kiara(ApartmentBase):
