@@ -25,7 +25,8 @@ def check_reservations():
                     messenger.sendText(c["number"], c["carrier"], msg)
         except Exception as e:
             error_msg = "{} failed with error: {}".format(type(a).__name__, e)
-            messenger.sendText(c["number"], c["carrier"],)
+            for c in CONTACTS:
+                messenger.sendText(c["number"], c["carrier"],)
             continue
 
 
