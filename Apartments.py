@@ -10,6 +10,25 @@ class ApartmentBase:
     def new_listings(self):
         return "Im unimplemented!"
 
+    def generate_text(self, units, building_name, has_type=False):
+        text = "{} Listings:\n".format(building_name)
+        for number, unit in units.items():
+            if number not in self.seen_listings:
+                msg = "Unit {} available {}, {} sqft for ${}\n".format(number, unit["available"], unit["sqft"], unit["rent"])
+                if has_type:
+                    msg = "{} {}".format(unit["type"], msg)
+                text += msg
+        for number, unit in dict(self.seen_listings).items():
+            if number not in units:
+                msg = "Unit {}, {} sqft, ${} is no longer available\n".format(number, unit["sqft"], unit["rent"])
+                del self.seen_listings[number]
+                text += msg
+
+        if text == "{} Listings:\n".format(building_name):
+            return None
+
+        return text
+
 
 class Kiara(ApartmentBase):
     def __init__(self):
@@ -20,9 +39,7 @@ class Kiara(ApartmentBase):
         ret = {
             "unit": int(row["Unit"]),
             "type": row["Type"],
-            "baths": int(row["Baths"]),
             "sqft": int(row["SqFt"]),
-            "floor": int(row["Floor"]),
             "available": row["Available"],
             "rent": int(row["Rent"])
         }
@@ -52,27 +69,8 @@ class Kiara(ApartmentBase):
                 print(e)
                 continue
 
-        for number, info in units.items():
-            if number not in self.seen_listings:
-                if ret is None:
-                    ret = "KIARA LISTING(s):\n"
-                self.seen_listings[number] = info
-                formatted = "Unit {} available {}, {} sqft for ${}/month on floor {}\n".format(info["unit"], info["available"], info["sqft"], info["rent"], info["floor"])
-                ret += formatted
-        for number, u in dict(self.seen_listings).items():
-            if number not in units:
-                rem += "Unit {}, {} sqft, ${} no longer available\n".format(u["unit"], u["sqft"], u["rent"])
-                del self.seen_listings[number]
-            elif units[number]["rent"] != u["rent"]:
-                rem += "Unit {}, {} sqft, went from ${} to ${}\n".format(u["unit"], u["sqft"], units[number]["rent"], u["rent"])
-                self.seen_listings[number] = u
+        return self.generate_text(units, "Kiara")
 
-        if ret is None and len(rem) > 0:
-            ret = "KIARA LISTING(s):\n"
-            ret += "\n{}".format(rem)
-        elif ret is not None and len(rem) > 0:
-            ret += "\n{}".format(rem)
-        return ret
 
 class Stratus(ApartmentBase):
     def __init__(self):
@@ -93,8 +91,6 @@ class Stratus(ApartmentBase):
 
 
     def new_listings(self):
-        ret = None
-        rem = ""
         units = {}
         for e in self.URL_exts:
             req = requests.get(self.URL_BASE + e)
@@ -103,36 +99,16 @@ class Stratus(ApartmentBase):
                 table = soup.find("table", class_=["table", "table-bordered"])
                 body = table.find('tbody')
                 rows = body.findAll('tr')
-                these_units = {}
-
                 for row in rows:
                     obj = self.map_row(row)
                     obj["type"] = e
-                    these_units[obj["unit"]] = obj
-                for number, info in these_units.items():
-                    if number not in self.seen_listings:
-                        self.seen_listings[number] = info
-                        if ret is None:
-                            ret = "STRATUS LISTING(s):\n"
-                        formatted = "{} unit {} available {}, {} sqft with rent range of {}\n".format(e, info["unit"], info["available"], info["sqft"], info["rent"])
-                        ret += formatted
-                units.update(these_units)
+                    units[obj["unit"]] = obj
             else:
                 print("No {} units".format(e))
-        for number, u in dict(self.seen_listings).items():
-            if number not in units:
-                rem += "{} unit {}, {} sqft, ${} no longer available\n".format(u["type"], u["unit"], u["sqft"], u["rent"])
-                del self.seen_listings[number]
-            elif units[number]["rent"] != u["rent"]:
-                rem += "{} unit {} went from [{}] to [{}]".format(u["type"], u["unit"], u["rent"], units[number]["rent"])
-                self.seen_listings[number] = units[number]
 
-        if ret is None and len(rem) > 0:
-            ret = "STRATUS LISTING(s):\n"
-            ret += rem
-        elif ret is not None and len(rem) > 0:
-            ret += rem
-        return ret
+        return self.generate_text(units, "Stratus", True)
+
+
 
 class McKenzie(ApartmentBase):
     def __init__(self):
@@ -146,35 +122,21 @@ class McKenzie(ApartmentBase):
         fp = req["floor_plans"]
         units = req["units"]
         floor_plans = {}
+        formatted_units = {}
         for f in fp:
             if f["bedroom_count"] == 2 and f["bathroom_count"] == 2:
                 floor_plans[f["id"]] = f
 
-
         for u in units:
-            if u["floor_plan_id"] in floor_plans and u["unit_number"] not in self.seen_listings:
-                self.seen_listings[u["unit_number"]] = u
-                if ret is None:
-                    ret = "McKenzie LISTING(s)\n"
-                formatted = "unit {} {}, {} sqft with rent of ${}\n".format(u["unit_number"], u["display_available_on"], u["display_area"].split(" ")[0], u["display_price"][1:])
-                ret += formatted
-        for number, u in dict(self.seen_listings).items():
-            if u["floor_plan_id"] not in floor_plans:
-                rem += "unit {}, {} sqft ${} no longer available\n".format(u["unit_number"], u["display_area"].split(" ")[0], u["display_price"][1:])
-                del self.seen_listings[number]
-            else:
-                for old in units:
-                    if old["unit_number"] == number and old["display_price"] != u["display_price"]:
-                        rem += "Unit {}, {} sqft went from ${} to ${}".format(u["unit_number"], u["display_area"].split(" ")[0],u["display_price"][1:], old["display_price"][1:])
-                        self.seen_listings[number] = old
+            if u["floor_plan_id"] in floor_plans:
+                formatted_units[u["unit_number"]] = {
+                    "sqft": u["display_area"].split(" ")[0],
+                    "rent": u["display_price"][1:],
+                    "unit": u["unit_number"],
+                    "available": u["display_available_on"]
+                }
 
-
-        if ret is None and len(rem) > 0:
-            ret = "McKenzie LISTING(s):\n"
-            ret += rem
-        elif ret is not None and len(rem) > 0:
-            ret += rem
-        return ret
+        return self.generate_text(formatted_units, "McKenzie")
 
 
 class Cirrus(ApartmentBase):
@@ -194,7 +156,6 @@ class Cirrus(ApartmentBase):
         }
         return ret
 
-
     def new_listings(self):
         ret = None
         units = {}
@@ -206,38 +167,12 @@ class Cirrus(ApartmentBase):
                 table = soup.find("table", class_=["table", "table-bordered"])
                 body = table.find('tbody')
                 rows = body.findAll('tr')
-                these_units = {}
                 for row in rows:
                     obj = self.map_row(row)
                     obj["type"] = e
-                    these_units[obj["unit"]] = obj
-                for number, info in these_units.items():
-                    if number not in self.seen_listings:
-                        self.seen_listings[number] = info
-                        if ret is None:
-                            ret = "Cirrus LISTING(s):\n"
-                        formatted = "{} unit {} available {}, {} sqft with rent range of {}\n".format(e, info["unit"], info["available"], info["sqft"], info["rent"])
-                        ret += formatted
-                units.update(these_units)
-            else:
-                print("No {} units".format(e))
-        for number, u in dict(self.seen_listings).items():
-            if number not in units:
-                rem += "{} unit {}, {} sqft, ${} no longer available\n".format(u["type"], u["unit"], u["sqft"], u["rent"])
-                del self.seen_listings[number]
-            elif units[number]["rent"] != u["rent"]:
-                rem += "{} unit {} went from [{}] to [{}]".format(u["type"], u["unit"], u["rent"], units[number]["rent"])
-                self.seen_listings[number] = units[number]
+                    units[obj["unit"]] = obj
 
-        if ret is None and len(rem) > 0:
-            ret = "Cirrus LISTING(s):\n"
-            ret += rem
-        elif ret is not None and len(rem) > 0:
-            ret += rem
-        return ret
-
-
-
+        return self.generate_text(units, "Cirrus", True)
 
 if __name__ == "__main__":
     dummy = {
@@ -254,6 +189,6 @@ if __name__ == "__main__":
         "display_area": "1215 wut",
         "display_price": "$11234"
     }
-    apt = Cirrus()
+    apt = Stratus()
     apt.seen_listings[dummy["unit"]]=dummy
     print(apt.new_listings())
