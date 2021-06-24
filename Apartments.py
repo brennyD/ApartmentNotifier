@@ -221,7 +221,7 @@ class Cirrus(ApartmentBase):
                 units.update(these_units)
             else:
                 print("No {} units".format(e))
-        for number, u in self.seen_listings.items():
+        for number, u in dict(self.seen_listings).items():
             if number not in units:
                 rem += "{} unit {}, {} sqft, ${} no longer available\n".format(u["type"], u["unit"], u["sqft"], u["rent"])
                 del self.seen_listings[number]
