@@ -18,6 +18,7 @@ class ApartmentBase:
                 if has_type:
                     msg = "{} {}".format(unit["type"], msg)
                 text += msg
+                self.seen_listings[number] = unit
         for number, unit in dict(self.seen_listings).items():
             if number not in units:
                 msg = "Unit {}, {} sqft, ${} is no longer available\n".format(number, unit["sqft"], unit["rent"])
@@ -108,8 +109,6 @@ class Stratus(ApartmentBase):
 
         return self.generate_text(units, "Stratus", True)
 
-
-
 class McKenzie(ApartmentBase):
     def __init__(self):
         ApartmentBase.__init__(self)
@@ -137,7 +136,6 @@ class McKenzie(ApartmentBase):
                 }
 
         return self.generate_text(formatted_units, "McKenzie")
-
 
 class Cirrus(ApartmentBase):
     def __init__(self):
@@ -192,3 +190,4 @@ if __name__ == "__main__":
     apt = Stratus()
     apt.seen_listings[dummy["unit"]]=dummy
     print(apt.new_listings())
+    print(apt.seen_listings)
