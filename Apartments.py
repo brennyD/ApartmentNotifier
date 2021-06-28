@@ -6,21 +6,24 @@ import json
 class ApartmentBase:
     def __init__(self):
         self.seen_listings = {}
+        self.units = {}
+        self.has_type = False
 
     def new_listings(self):
         return "Im unimplemented!"
 
-    def generate_text(self, units, building_name, has_type=False):
+    def generate_text(self):
+        building_name = type(self).__name__
         text = "{} Listings:\n".format(building_name)
-        for number, unit in units.items():
+        for number, unit in self.units.items():
             if number not in self.seen_listings:
                 msg = "Unit {} available {}, {} sqft for ${}\n".format(number, unit["available"], unit["sqft"], unit["rent"])
-                if has_type:
+                if self.has_type:
                     msg = "{} {}".format(unit["type"], msg)
                 text += msg
                 self.seen_listings[number] = unit
         for number, unit in dict(self.seen_listings).items():
-            if number not in units:
+            if number not in self.units:
                 msg = "Unit {}, {} sqft, ${} is no longer available\n".format(number, unit["sqft"], unit["rent"])
                 del self.seen_listings[number]
                 text += msg
@@ -59,18 +62,17 @@ class Kiara(ApartmentBase):
         ret = None
         rem = ""
 
-        units = {}
         for r in data:
             try:
                 row = self.map_row(r)
                 if row["type"] == "2 Bedroom":
                     addition = self.map_row(r)
-                    units[addition["unit"]] = addition
+                    self.units[addition["unit"]] = addition
             except Exception as e:
                 print(e)
                 continue
 
-        return self.generate_text(units, "Kiara")
+        return self.generate_text()
 
 
 class Stratus(ApartmentBase):
@@ -78,6 +80,7 @@ class Stratus(ApartmentBase):
         ApartmentBase.__init__(self)
         self.URL_exts = ['b1', 'b2', 'b3', 'b4', 'b5']
         self.URL_BASE = "https://www.stratusseattle.com/floorplans/"
+        self.has_type = True
 
     def map_row(self, row):
         info = row.findAll('td')
@@ -92,7 +95,6 @@ class Stratus(ApartmentBase):
 
 
     def new_listings(self):
-        units = {}
         for e in self.URL_exts:
             req = requests.get(self.URL_BASE + e)
             soup = BeautifulSoup(req.content, 'html.parser')
@@ -103,11 +105,11 @@ class Stratus(ApartmentBase):
                 for row in rows:
                     obj = self.map_row(row)
                     obj["type"] = e
-                    units[obj["unit"]] = obj
+                    self.units[obj["unit"]] = obj
             else:
                 print("No {} units".format(e))
 
-        return self.generate_text(units, "Stratus", True)
+        return self.generate_text()
 
 class McKenzie(ApartmentBase):
     def __init__(self):
@@ -119,29 +121,29 @@ class McKenzie(ApartmentBase):
         ret = None
         rem = ""
         fp = req["floor_plans"]
-        units = req["units"]
+        raw_units = req["units"]
         floor_plans = {}
-        formatted_units = {}
         for f in fp:
             if f["bedroom_count"] == 2 and f["bathroom_count"] == 2:
                 floor_plans[f["id"]] = f
 
-        for u in units:
+        for u in raw_units:
             if u["floor_plan_id"] in floor_plans:
-                formatted_units[u["unit_number"]] = {
+                self.units[u["unit_number"]] = {
                     "sqft": u["display_area"].split(" ")[0],
                     "rent": u["display_price"][1:],
                     "unit": u["unit_number"],
                     "available": u["display_available_on"]
                 }
 
-        return self.generate_text(formatted_units, "McKenzie")
+        return self.generate_text()
 
 class Cirrus(ApartmentBase):
     def __init__(self):
         ApartmentBase.__init__(self)
         self.URL_exts = ['b1', 'b2-2bed2', 'b3']
         self.URL_BASE = "https://www.cirrusseattle.com/floorplans/"
+        self.has_type = True
 
     def map_row(self, row):
         info = row.findAll('td')
@@ -156,7 +158,6 @@ class Cirrus(ApartmentBase):
 
     def new_listings(self):
         ret = None
-        units = {}
         rem = ""
         for e in self.URL_exts:
             req = requests.get(self.URL_BASE + e)
@@ -168,9 +169,9 @@ class Cirrus(ApartmentBase):
                 for row in rows:
                     obj = self.map_row(row)
                     obj["type"] = e
-                    units[obj["unit"]] = obj
+                    self.units[obj["unit"]] = obj
 
-        return self.generate_text(units, "Cirrus", True)
+        return self.generate_text()
 
 if __name__ == "__main__":
     dummy = {
