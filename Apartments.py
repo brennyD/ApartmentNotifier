@@ -27,6 +27,12 @@ class ApartmentBase:
                 msg = "Unit {}, {} sqft, ${} is no longer available\n".format(number, unit["sqft"], unit["rent"])
                 del self.seen_listings[number]
                 text += msg
+            elif self.units[number]["rent"] != unit["rent"]:
+                msg = "Unit {}, {} sqft went from ${} to ${}\n".format(number, unit["sqft"], unit["rent"], self.units[number]["rent"])
+                if self.has_type:
+                    msg = "{} {}".format(unit["type"], msg)
+                text += msg
+                self.seen_listings[number] = self.units[number]
 
         if text == "{} Listings:\n".format(building_name):
             return None
@@ -175,7 +181,7 @@ class Cirrus(ApartmentBase):
 
 if __name__ == "__main__":
     dummy = {
-        "unit": 3807,
+        "unit": 2110,
         "type": "b4",
         "baths": 2,
         "sqft": 1215,
