@@ -20,7 +20,8 @@ def check_reservations(debug=False):
         print("Checking {}".format(type(a).__name__))
         try:
             msg = a.new_listings()
-            print(msg)
+            if msg is not None:
+                print(msg)
             if msg is not None and not debug:
                 for c in CONTACTS:
                     messenger.sendText(c["number"], c["carrier"], msg)
