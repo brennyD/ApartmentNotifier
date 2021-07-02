@@ -33,7 +33,7 @@ class ApartmentBase:
                     msg = "{} {}".format(unit["type"], msg)
                 text += msg
                 self.seen_listings[number] = self.units[number]
-
+        self.units = {}
         if text == "{} Listings:\n".format(building_name):
             return None
 
